@@ -58,7 +58,7 @@ public class SpikeLoadTest
 
    public static final String jdbcUrl = "jdbc:stub";
 
-   private static final int MIN_POOL_SIZE = 5;
+   private static final int MIN_POOL_SIZE = 1;
    private static final int MAX_POOL_SIZE = 50;
 
    private DataSource DS;
