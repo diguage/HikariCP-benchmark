@@ -24,6 +24,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 
 import com.zaxxer.hikari.util.UtilityElf;
 
@@ -36,6 +39,7 @@ public class StubStatement implements Statement
    protected int count;
    private boolean closed;
    private static long executeDelay;
+   private static LongAdder total = new LongAdder();
 
    public static void setExecuteDelayMs(final long delay)
    {
@@ -62,11 +66,16 @@ public class StubStatement implements Statement
    /** {@inheritDoc} */
    public ResultSet executeQuery(String sql) throws SQLException
    {
+      total.increment();
+      if (System.currentTimeMillis() % 1000 < 3) {
+         long sum = total.sum();
+         System.out.println(sum + " executeDelay =" + executeDelay);
+      }
+      if (total.sum() > 200_000) {
+         executeDelay = ThreadLocalRandom.current().nextInt(8, 15);
+      }
+
       if (executeDelay > 0) {
-//         final long start = nanoTime();
-//         do {
-//            // spin
-//         } while (nanoTime() - start < MILLISECONDS.toNanos(executeDelayMs));
          UtilityElf.quietlySleep(executeDelay);
       }
       return new StubResultSet();

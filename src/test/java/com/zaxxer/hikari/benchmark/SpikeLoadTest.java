@@ -31,6 +31,7 @@ import java.util.stream.IntStream;
 import javax.sql.DataSource;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.zaxxer.hikari.util.UtilityElf;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.dbcp2.DbcpPoolAccessor;
 import org.apache.commons.dbcp2.TomcatPoolAccessor;
@@ -58,7 +59,7 @@ public class SpikeLoadTest
 
    public static final String jdbcUrl = "jdbc:stub";
 
-   private static final int MIN_POOL_SIZE = 1;
+   private static final int MIN_POOL_SIZE = 5;
    private static final int MAX_POOL_SIZE = 50;
 
    private DataSource DS;
@@ -143,7 +144,7 @@ public class SpikeLoadTest
          }
       });
 
-      quietlySleep(SECONDS.toMillis(2));
+      quietlySleep(SECONDS.toMillis(15));
 
       this.requestCount = parseInt(args[2]);
    }
@@ -195,11 +196,7 @@ public class SpikeLoadTest
       do {
          poolStatistics = getPoolStatistics(startTime, threadsPending.get());
          statsList.add(poolStatistics);
-
-         final long spinStart = nanoTime();
-         do {
-            // spin
-         } while (nanoTime() - spinStart < 250_000 /* 0.1ms */);
+         UtilityElf.quietlySleep(8L);
       }
       while (threadsRemaining.get() > 0  || poolStatistics.activeConnections > 0);
 
@@ -347,7 +344,7 @@ public class SpikeLoadTest
       ExecutorService executor = Executors.newFixedThreadPool(10);
       for (int k = 0; k < 10; k++) {
          executor.execute(() -> {
-            for (int i = 0; i < 100_000; i++) {
+            for (int i = 0; i < 20_000; i++) {
                try (Connection connection = DS.getConnection();
                     Statement statement = connection.createStatement();
                     ResultSet resultSet = statement.executeQuery("SELECT x FROM faux")) {
